@@ -8,17 +8,153 @@ void Do_TTF_SetError(const char *str) {
     TTF_SetError("%s", str);
 }
 
-#if SDL_TTF_MAJOR_VERSION == 2 && SDL_TTF_MINOR_VERSION == 0 && SDL_TTF_PATCHLEVEL >= 18
+#if !SDL_TTF_VERSION_ATLEAST(2,0,20)
+
+typedef enum
+{
+  TTF_DIRECTION_LTR = 0,
+  TTF_DIRECTION_RTL,
+  TTF_DIRECTION_TTB,
+  TTF_DIRECTION_BTT
+} TTF_Direction;
+
+#define TTF_WRAPPED_ALIGN_LEFT      0
+#define TTF_WRAPPED_ALIGN_CENTER    1
+#define TTF_WRAPPED_ALIGN_RIGHT     2
+
+static inline int TTF_GetFontWrappedAlign(const TTF_Font *font)
+{
+    return 0;
+}
+
+static inline void TTF_SetFontWrappedAlign(TTF_Font *font, int align)
+{
+    // do nothing
+}
+
+static inline SDL_Surface * TTF_RenderText_LCD(TTF_Font *font, const char * text, SDL_Color fg, SDL_Color bg)
+{
+    return NULL;
+}
+
+static inline SDL_Surface * TTF_RenderUTF8_LCD(TTF_Font *font, const char * text, SDL_Color fg, SDL_Color bg)
+{
+    return NULL;
+}
+
+static inline SDL_Surface * TTF_RenderUNICODE_LCD(TTF_Font *font, const Uint16 * text, SDL_Color fg, SDL_Color bg)
+{
+    return NULL;
+}
+
+static inline SDL_Surface * TTF_RenderText_LCD_Wrapped(TTF_Font *font, const char * text, SDL_Color fg, SDL_Color bg, Uint32 wrapLength)
+{
+    return NULL;
+}
+
+static inline SDL_Surface * TTF_RenderUTF8_LCD_Wrapped(TTF_Font *font, const char * text, SDL_Color fg, SDL_Color bg, Uint32 wrapLength)
+{
+    return NULL;
+}
+
+static inline SDL_Surface * TTF_RenderUNICODE_LCD_Wrapped(TTF_Font *font, const Uint16 * text, SDL_Color fg, SDL_Color bg, Uint32 wrapLength)
+{
+    return NULL;
+}
+
+static inline SDL_Surface * TTF_RenderGlyph_LCD(TTF_Font *font, Uint16 ch, SDL_Color fg, SDL_Color bg)
+{
+    return NULL;
+}
+
+static inline SDL_Surface * TTF_RenderGlyph32_LCD(TTF_Font *font, Uint32 ch, SDL_Color fg, SDL_Color bg)
+{
+    return NULL;
+}
+
+static inline int TTF_SetFontDirection(TTF_Font *font, TTF_Direction direction)
+{
+    return -1;
+}
+
+static inline int TTF_SetFontScriptName(TTF_Font *font, const char *script)
+{
+    return -1;
+}
+
+#endif
+
+#if SDL_TTF_VERSION_ATLEAST(2,0,18)
 static inline void ByteSwappedUNICODE(int swapped)
 {
 	TTF_ByteSwappedUNICODE(swapped ? SDL_TRUE : SDL_FALSE);
 }
 #else
+
+#if defined(WARN_OUTDATED)
+#pragma message("TTF_MeasureText is not supported before SDL_ttf 2.0.18")
+#pragma message("TTF_MeasureUTF8 is not supported before SDL_ttf 2.0.18")
+#pragma message("TTF_MeasureUNICODE is not supported before SDL_ttf 2.0.18")
+#endif
+
 static inline void ByteSwappedUNICODE(int swapped)
 {
 	TTF_ByteSwappedUNICODE(swapped);
 }
+
+static inline int TTF_MeasureText(TTF_Font *font, const char *text, int measure_width, int *extent, int *count)
+{
+    return -1;
+}
+
+static inline int TTF_MeasureUTF8(TTF_Font *font, const char *text, int measure_width, int *extent, int *count)
+{
+    return -1;
+}
+
+static inline int TTF_MeasureUNICODE(TTF_Font *font, const Uint16 *text, int measure_width, int *extent, int *count)
+{
+    return -1;
+}
 #endif
+
+
+#if !SDL_TTF_VERSION_ATLEAST(2,0,12)
+#if defined(WARN_OUTDATED)
+#pragma message("TTF_GlyphIsProvided is not supported before SDL_ttf 2.0.12")
+#endif
+
+static inline int TTF_GlyphIsProvided(TTF_Font *font, Uint16 ch)
+{
+    return 0;
+}
+
+#endif
+
+#if !SDL_TTF_VERSION_ATLEAST(2,0,18)
+#if defined(WARN_OUTDATED)
+#pragma message("TTF_GlyphIsProvided32 is not supported before SDL_ttf 2.0.18")
+#pragma message("TTF_RenderUTF8_Solid_Wrapped is not supported before SDL_ttf 2.0.18")
+#pragma message("TTF_RenderUTF8_Shaded_Wrapped is not supported before SDL_ttf 2.0.18")
+#endif
+
+static inline int TTF_GlyphIsProvided32(TTF_Font *font, Uint32 ch)
+{
+    return 0;
+}
+
+static inline SDL_Surface * TTF_RenderUTF8_Solid_Wrapped(TTF_Font *font, const char *text, SDL_Color fg, Uint32 wrapLength)
+{
+	return 0;
+}
+
+static inline SDL_Surface * TTF_RenderUTF8_Shaded_Wrapped(TTF_Font *font, const char *text, SDL_Color fg, SDL_Color bg, Uint32 wrapLength)
+{
+	return 0;
+}
+
+#endif
+
 */
 import "C"
 import (
@@ -29,26 +165,49 @@ import (
 )
 
 // Hinting settings.
+type Hinting int
+
 const (
-	HINTING_NORMAL = int(C.TTF_HINTING_NORMAL)
-	HINTING_LIGHT  = int(C.TTF_HINTING_LIGHT)
-	HINTING_MONO   = int(C.TTF_HINTING_MONO)
-	HINTING_NONE   = int(C.TTF_HINTING_NONE)
+	HINTING_NORMAL Hinting = C.TTF_HINTING_NORMAL
+	HINTING_LIGHT  Hinting = C.TTF_HINTING_LIGHT
+	HINTING_MONO   Hinting = C.TTF_HINTING_MONO
+	HINTING_NONE   Hinting = C.TTF_HINTING_NONE
 )
 
 // Font rendering styles.
+type Style int
+
 const (
-	STYLE_NORMAL        = 0
-	STYLE_BOLD          = 0x01
-	STYLE_ITALIC        = 0x02
-	STYLE_UNDERLINE     = 0x04
-	STYLE_STRIKETHROUGH = 0x08
+	STYLE_NORMAL        Style = C.TTF_STYLE_NORMAL
+	STYLE_BOLD          Style = C.TTF_STYLE_BOLD
+	STYLE_ITALIC        Style = C.TTF_STYLE_ITALIC
+	STYLE_UNDERLINE     Style = C.TTF_STYLE_UNDERLINE
+	STYLE_STRIKETHROUGH Style = C.TTF_STYLE_STRIKETHROUGH
 )
 
 // Font contains font information.
 type Font struct {
 	f *C.TTF_Font
 }
+
+// Font alignment
+type Align int
+
+const (
+	WRAPPED_ALIGN_LEFT   Align = C.TTF_WRAPPED_ALIGN_LEFT
+	WRAPPED_ALIGN_CENTER Align = C.TTF_WRAPPED_ALIGN_CENTER
+	WRAPPED_ALIGN_RIGHT  Align = C.TTF_WRAPPED_ALIGN_RIGHT
+)
+
+// Font direction
+type Direction int
+
+const (
+	DIRECTION_LTR Direction = C.TTF_DIRECTION_LTR
+	DIRECTION_RTL Direction = C.TTF_DIRECTION_RTL
+	DIRECTION_TTB Direction = C.TTF_DIRECTION_TTB
+	DIRECTION_BTT Direction = C.TTF_DIRECTION_BTT
+)
 
 // Init initializes the truetype font API. This must be called before using other functions in this library, except ttf.WasInit(). SDL does not have to be initialized before this call.
 // (https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_8.html)
@@ -162,6 +321,19 @@ func (f *Font) RenderUTF8Solid(text string, color sdl.Color) (*sdl.Surface, erro
 	return surface, nil
 }
 
+// RenderUTF8SolidWrapped creates an 8-bit palettized surface and render the given text at fast quality with the given font and color.  The 0 pixel is the colorkey, giving a transparent background, and the 1 pixel is set to the text color. Text is wrapped to multiple lines on line endings and on word boundaries if it extends beyond wrapLength in pixels.
+// (https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_44.html)
+func (f *Font) RenderUTF8SolidWrapped(text string, color sdl.Color, wrapLength int) (*sdl.Surface, error) {
+	_text := C.CString(text)
+	defer C.free(unsafe.Pointer(_text))
+	_c := C.SDL_Color{C.Uint8(color.R), C.Uint8(color.G), C.Uint8(color.B), C.Uint8(color.A)}
+	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderUTF8_Solid_Wrapped(f.f, _text, _c, C.Uint32(wrapLength))))
+	if surface == nil {
+		return nil, GetError()
+	}
+	return surface, nil
+}
+
 // RenderUTF8Shaded creates an 8-bit palettized surface and render the given text at high quality with the given font and colors. The 0 pixel is background, while other pixels have varying degrees of the foreground color.
 // (https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_48.html)
 func (f *Font) RenderUTF8Shaded(text string, fg, bg sdl.Color) (*sdl.Surface, error) {
@@ -170,6 +342,20 @@ func (f *Font) RenderUTF8Shaded(text string, fg, bg sdl.Color) (*sdl.Surface, er
 	_fg := C.SDL_Color{C.Uint8(fg.R), C.Uint8(fg.G), C.Uint8(fg.B), C.Uint8(fg.A)}
 	_bg := C.SDL_Color{C.Uint8(bg.R), C.Uint8(bg.G), C.Uint8(bg.B), C.Uint8(bg.A)}
 	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderUTF8_Shaded(f.f, _text, _fg, _bg)))
+	if surface == nil {
+		return nil, GetError()
+	}
+	return surface, nil
+}
+
+// RenderUTF8ShadedWrapped creates an 8-bit palettized surface and render the given text at high quality with the given font and colors. The 0 pixel is background, while other pixels have varying degrees of the foreground color. Text is wrapped to multiple lines on line endings and on word boundaries if it extends beyond wrapLength in pixels.
+// (https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_48.html)
+func (f *Font) RenderUTF8ShadedWrapped(text string, fg, bg sdl.Color, wrapLength int) (*sdl.Surface, error) {
+	_text := C.CString(text)
+	defer C.free(unsafe.Pointer(_text))
+	_fg := C.SDL_Color{C.Uint8(fg.R), C.Uint8(fg.G), C.Uint8(fg.B), C.Uint8(fg.A)}
+	_bg := C.SDL_Color{C.Uint8(bg.R), C.Uint8(bg.G), C.Uint8(bg.B), C.Uint8(bg.A)}
+	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderUTF8_Shaded_Wrapped(f.f, _text, _fg, _bg, C.Uint32(wrapLength))))
 	if surface == nil {
 		return nil, GetError()
 	}
@@ -281,25 +467,25 @@ func (f *Font) Faces() int { return int(C.TTF_FontFaces(f.f)) }
 
 // GetStyle returns the rendering style of the loaded font.
 // (https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_21.html)
-func (f *Font) GetStyle() int {
-	return int(C.TTF_GetFontStyle(f.f))
+func (f *Font) GetStyle() Style {
+	return Style(C.TTF_GetFontStyle(f.f))
 }
 
 // SetStyle sets the rendering style of the loaded font.
 // (https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_22.html)
-func (f *Font) SetStyle(style int) {
+func (f *Font) SetStyle(style Style) {
 	C.TTF_SetFontStyle(f.f, C.int(style))
 }
 
 // GetHinting returns the current hinting setting of the loaded font.
 // (https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_25.html)
-func (f *Font) GetHinting() int {
-	return int(C.TTF_GetFontHinting(f.f))
+func (f *Font) GetHinting() Hinting {
+	return Hinting(C.TTF_GetFontHinting(f.f))
 }
 
 // SetHinting sets the hinting of the loaded font.
 // (https://www.libsdl.org/projects/SDL_ttf/docs/SDL_ttf_26.html)
-func (f *Font) SetHinting(hinting int) {
+func (f *Font) SetHinting(hinting Hinting) {
 	C.TTF_SetFontHinting(f.f, C.int(hinting))
 }
 
@@ -348,9 +534,9 @@ func (f *Font) FaceFamilyName() string {
 // FaceStyleName returns the current font face family's style name from the loaded font.
 // (https://wiki.libsdl.org/SDL_ttf/TTF_FontFaceStyleName)
 func (f *Font) FaceStyleName() string {
-        _fname := C.TTF_FontFaceStyleName(f.f)
-        fname := C.GoString(_fname)
-        return fname
+	_fname := C.TTF_FontFaceStyleName(f.f)
+	fname := C.GoString(_fname)
+	return fname
 }
 
 // GlyphMetrics contains glyph-specific rendering metrics.
@@ -370,4 +556,178 @@ func (f *Font) GlyphMetrics(ch rune) (*GlyphMetrics, error) {
 		return &GlyphMetrics{int(minX), int(maxX), int(minY), int(maxY), int(adv)}, nil
 	}
 	return nil, GetError()
+}
+
+func (f *Font) GetWrappedAlign() Align {
+	return Align(C.TTF_GetFontWrappedAlign(f.f))
+}
+
+func (f *Font) SetWrappedAlign(align Align) {
+	C.TTF_SetFontWrappedAlign(f.f, C.int(align))
+}
+
+func (f *Font) RenderTextLCD(text string, fg, bg sdl.Color) (*sdl.Surface, error) {
+	_text := C.CString(text)
+	defer C.free(unsafe.Pointer(_text))
+	_fg := C.SDL_Color{C.Uint8(fg.R), C.Uint8(fg.G), C.Uint8(fg.B), C.Uint8(fg.A)}
+	_bg := C.SDL_Color{C.Uint8(bg.R), C.Uint8(bg.G), C.Uint8(bg.B), C.Uint8(bg.A)}
+	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderText_LCD(f.f, _text, _fg, _bg)))
+	if surface == nil {
+		return nil, GetError()
+	}
+	return surface, nil
+}
+
+func (f *Font) RenderUTF8LCD(text string, fg, bg sdl.Color) (*sdl.Surface, error) {
+	_text := C.CString(text)
+	defer C.free(unsafe.Pointer(_text))
+	_fg := C.SDL_Color{C.Uint8(fg.R), C.Uint8(fg.G), C.Uint8(fg.B), C.Uint8(fg.A)}
+	_bg := C.SDL_Color{C.Uint8(bg.R), C.Uint8(bg.G), C.Uint8(bg.B), C.Uint8(bg.A)}
+	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderUTF8_LCD(f.f, _text, _fg, _bg)))
+	if surface == nil {
+		return nil, GetError()
+	}
+	return surface, nil
+}
+
+func (f *Font) RenderUNICODELCD(text []uint16, fg, bg sdl.Color) (*sdl.Surface, error) {
+	_text := (*C.Uint16)(&text[0])
+	_fg := C.SDL_Color{C.Uint8(fg.R), C.Uint8(fg.G), C.Uint8(fg.B), C.Uint8(fg.A)}
+	_bg := C.SDL_Color{C.Uint8(bg.R), C.Uint8(bg.G), C.Uint8(bg.B), C.Uint8(bg.A)}
+	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderUNICODE_LCD(f.f, _text, _fg, _bg)))
+	if surface == nil {
+		return nil, GetError()
+	}
+	return surface, nil
+}
+
+func (f *Font) RenderTextLCDWrapped(text string, fg, bg sdl.Color, wrapLength uint32) (*sdl.Surface, error) {
+	_text := C.CString(text)
+	defer C.free(unsafe.Pointer(_text))
+	_fg := C.SDL_Color{C.Uint8(fg.R), C.Uint8(fg.G), C.Uint8(fg.B), C.Uint8(fg.A)}
+	_bg := C.SDL_Color{C.Uint8(bg.R), C.Uint8(bg.G), C.Uint8(bg.B), C.Uint8(bg.A)}
+	_wrapLength := C.Uint32(wrapLength)
+	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderText_LCD_Wrapped(f.f, _text, _fg, _bg, _wrapLength)))
+	if surface == nil {
+		return nil, GetError()
+	}
+	return surface, nil
+}
+
+func (f *Font) RenderUTF8LCDWrapped(text string, fg, bg sdl.Color, wrapLength uint32) (*sdl.Surface, error) {
+	_text := C.CString(text)
+	defer C.free(unsafe.Pointer(_text))
+	_fg := C.SDL_Color{C.Uint8(fg.R), C.Uint8(fg.G), C.Uint8(fg.B), C.Uint8(fg.A)}
+	_bg := C.SDL_Color{C.Uint8(bg.R), C.Uint8(bg.G), C.Uint8(bg.B), C.Uint8(bg.A)}
+	_wrapLength := C.Uint32(wrapLength)
+	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderUTF8_LCD_Wrapped(f.f, _text, _fg, _bg, _wrapLength)))
+	if surface == nil {
+		return nil, GetError()
+	}
+	return surface, nil
+}
+
+func (f *Font) RenderUNICODELCDWrapped(text []uint16, fg, bg sdl.Color, wrapLength uint32) (*sdl.Surface, error) {
+	_text := (*C.Uint16)(&text[0])
+	_fg := C.SDL_Color{C.Uint8(fg.R), C.Uint8(fg.G), C.Uint8(fg.B), C.Uint8(fg.A)}
+	_bg := C.SDL_Color{C.Uint8(bg.R), C.Uint8(bg.G), C.Uint8(bg.B), C.Uint8(bg.A)}
+	_wrapLength := C.Uint32(wrapLength)
+	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderUNICODE_LCD_Wrapped(f.f, _text, _fg, _bg, _wrapLength)))
+	if surface == nil {
+		return nil, GetError()
+	}
+	return surface, nil
+}
+
+func (f *Font) RenderGlyphLCD(ch uint16, fg, bg sdl.Color) (*sdl.Surface, error) {
+	_ch := C.Uint16(ch)
+	_fg := C.SDL_Color{C.Uint8(fg.R), C.Uint8(fg.G), C.Uint8(fg.B), C.Uint8(fg.A)}
+	_bg := C.SDL_Color{C.Uint8(bg.R), C.Uint8(bg.G), C.Uint8(bg.B), C.Uint8(bg.A)}
+	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderGlyph_LCD(f.f, _ch, _fg, _bg)))
+	if surface == nil {
+		return nil, GetError()
+	}
+	return surface, nil
+}
+
+func (f *Font) RenderGlyph32LCD(ch uint32, fg, bg sdl.Color) (*sdl.Surface, error) {
+	_ch := C.Uint32(ch)
+	_fg := C.SDL_Color{C.Uint8(fg.R), C.Uint8(fg.G), C.Uint8(fg.B), C.Uint8(fg.A)}
+	_bg := C.SDL_Color{C.Uint8(bg.R), C.Uint8(bg.G), C.Uint8(bg.B), C.Uint8(bg.A)}
+	surface := (*sdl.Surface)(unsafe.Pointer(C.TTF_RenderGlyph32_LCD(f.f, _ch, _fg, _bg)))
+	if surface == nil {
+		return nil, GetError()
+	}
+	return surface, nil
+}
+
+func (f *Font) SetDirection(direction Direction) error {
+	_direction := C.TTF_Direction(direction)
+	ret := C.TTF_SetFontDirection(f.f, _direction)
+	if ret != 0 {
+		return GetError()
+	}
+	return nil
+}
+
+func (f *Font) SetScriptName(script string) error {
+	_script := C.CString(script)
+	defer C.free(unsafe.Pointer(_script))
+	ret := C.TTF_SetFontScriptName(f.f, _script)
+	if ret != 0 {
+		return GetError()
+	}
+	return nil
+}
+
+// GlyphIsProvided checks whether a glyph is provided by the font for a 16-bit codepoint.
+// Note that this version of the function takes a 16-bit character code, which covers the Basic Multilingual Plane, but is insufficient to cover the entire set of possible Unicode values, including emoji glyphs. You should use GlyphIsProvided32() instead, which offers the same functionality but takes a 32-bit codepoint instead.
+func (f *Font) GlyphIsProvided(ch uint16) bool {
+	_ch := C.Uint16(ch)
+	return C.TTF_GlyphIsProvided(f.f, _ch) != 0
+}
+
+// GlyphIsProvided32 checks whether a glyph is provided by the font for a 32-bit codepoint.
+// Note that this is the same as GlyphIsProvided(), but takes a 32-bit character instead of 16-bit, and thus can query a larger range. There's no reason not to use this function exclusively.
+func (f *Font) GlyphIsProvided32(ch uint32) bool {
+	_ch := C.Uint32(ch)
+	return C.TTF_GlyphIsProvided32(f.f, _ch) != 0
+}
+
+func (f *Font) MeasureText(text string, measureWidth int) (extent, count int, err error) {
+	_text := C.CString(text)
+	defer C.free(unsafe.Pointer(_text))
+	_measureWidth := C.int(measureWidth)
+	_extend := (*C.int)(unsafe.Pointer(&extent))
+	_count := (*C.int)(unsafe.Pointer(&count))
+	ret := C.TTF_MeasureText(f.f, _text, _measureWidth, _extend, _count)
+	if ret != 0 {
+		err = GetError()
+	}
+	return
+}
+
+func (f *Font) MeasureUTF8(text string, measureWidth int) (extent, count int, err error) {
+	_text := C.CString(text)
+	defer C.free(unsafe.Pointer(_text))
+	_measureWidth := C.int(measureWidth)
+	_extend := (*C.int)(unsafe.Pointer(&extent))
+	_count := (*C.int)(unsafe.Pointer(&count))
+	ret := C.TTF_MeasureUTF8(f.f, _text, _measureWidth, _extend, _count)
+	if ret != 0 {
+		err = GetError()
+	}
+	return
+}
+
+func (f *Font) MeasureUNICODE(text []uint16, measureWidth int) (extent, count int, err error) {
+	_text := (*C.Uint16)(&text[0])
+	_measureWidth := C.int(measureWidth)
+	_extend := (*C.int)(unsafe.Pointer(&extent))
+	_count := (*C.int)(unsafe.Pointer(&count))
+	ret := C.TTF_MeasureUNICODE(f.f, _text, _measureWidth, _extend, _count)
+	if ret != 0 {
+		err = GetError()
+	}
+	return
 }
